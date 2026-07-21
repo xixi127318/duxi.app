@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#FCE4EC">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="渡晞">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💗</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💗</text></svg>">
+<title>渡晞</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--pink:#F8D7DA;--pink-light:#FCE4EC;--pink-dark:#E8A0B4;--blue:#B3D9E8;--blue-light:#D4ECF5;--blue-dark:#7BB8D0;--white:#FFF8FA;--text:#5A4A52;--text-light:#8A7A82;--shadow:rgba(183,157,170,0.2)}
+body{font-family:-apple-system,'Helvetica Neue','PingFang SC',sans-serif;background:var(--white);color:var(--text);min-height:100vh}
+.navbar{background:linear-gradient(135deg,var(--pink-light),var(--blue-light));padding:14px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px var(--shadow);position:sticky;top:0;z-index:100}
+.navbar-title{font-size:18px;font-weight:600;color:var(--text)}
+.navbar-actions{display:flex;gap:6px}
+.menu-btn{background:none;border:none;font-size:22px;color:var(--text);cursor:pointer;padding:4px 8px;border-radius:8px}
+.menu-btn:active{background:rgba(255,255,255,0.5)}
+.sidebar{position:fixed;top:0;left:-280px;width:260px;height:100%;background:var(--white);box-shadow:4px 0 20px var(--shadow);z-index:300;transition:left .3s;padding:20px 0;display:flex;flex-direction:column}
+.sidebar.open{left:0}
+.sidebar-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);z-index:299}
+.sidebar-overlay.show{display:block}
+.sidebar-header{text-align:center;font-size:22px;font-weight:700;color:var(--text);padding:12px 20px 16px;border-bottom:1px solid var(--pink-light)}
+.sidebar-user{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--pink-light)}
+.sidebar-avatar{font-size:28px}
+.sidebar-user-name{font-size:16px;font-weight:500}
+.sidebar-menu{flex:1;padding:8px 12px;overflow-y:auto}
+.sidebar-item{display:flex;align-items:center;gap:12px;width:100%;padding:12px 16px;background:none;border:none;font-size:16px;color:var(--text);cursor:pointer;border-radius:12px;margin-bottom:4px;text-align:left}
+.sidebar-item:active{background:var(--pink-light)}
+.sidebar-footer{text-align:center;padding:16px;font-size:12px;color:var(--text-light);opacity:.5;border-top:1px solid var(--pink-light)}
+.conv-item{font-size:14px;padding:10px 16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv-item.active{background:var(--pink-light);font-weight:500}
+.page{display:none;padding:0;max-width:600px;margin:0 auto}
+.page.active{display:block}
+.page-content{padding:16px 20px 80px}
+.chat-container{display:flex;flex-direction:column;height:calc(100vh - 56px - 52px)}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px}
+.chat-welcome{text-align:center;padding:60px 20px;color:var(--text-light)}
+.chat-welcome-icon{font-size:48px;margin-bottom:12px}
+.chat-welcome-text{font-size:20px;font-weight:600;color:var(--text);margin-bottom:6px}
+.chat-welcome-sub{font-size:14px}
+.chat-msg{max-width:80%;padding:10px 14px;border-radius:16px;font-size:15px;line-height:1.5;word-break:break-word}
+.chat-msg.me{align-self:flex-end;background:var(--pink);border-bottom-right-radius:4px}
+.chat-msg.other{align-self:flex-start;background:var(--blue-light);border-bottom-left-radius:4px}
+.chat-msg-time{font-size:11px;color:var(--text-light);margin-top:4px;opacity:.7}
+.chat-input-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));background:var(--white);border-top:1px solid var(--pink-light)}
+.chat-input{flex:1;border:1px solid var(--pink);border-radius:20px;padding:10px 14px;font-size:15px;outline:none;background:var(--white);color:var(--text)}
+.chat-input:focus{border-color:var(--pink-dark)}
+.send-btn{background:linear-gradient(135deg,var(--pink),var(--blue));color:var(--text);font-size:14px;padding:8px 16px;border-radius:20px;font-weight:500;border:none;cursor:pointer}
+.btn{padding:6px 14px;border-radius:20px;border:none;font-size:13px;cursor:pointer;font-weight:500}
+.btn-pink{background:var(--pink);color:var(--text)}
+.btn-blue{background:var(--blue);color:var(--text)}
+.btn-bow{padding-left:24px;position:relative}
+.btn-bow::before{content:'🎀';position:absolute;left:6px;top:50%;transform:translateY(-50%);font-size:12px}
+.btn-full{width:100%;padding:10px}
+.login-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;background:linear-gradient(160deg,var(--pink-light),var(--blue-light))}
+.login-page .logo{font-size:48px;margin-bottom:8px}
+.login-page .app-name{font-size:32px;font-weight:700;color:var(--text);margin-bottom:4px}
+.login-page .subtitle{font-size:14px;color:var(--text-light);margin-bottom:32px}
+.login-box{background:var(--white);border-radius:20px;padding:24px;width:100%;max-width:320px;box-shadow:0 4px 20px var(--shadow)}
+.login-box input{width:100%;padding:12px 16px;border:1px solid var(--pink);border-radius:12px;font-size:15px;outline:none;margin-bottom:12px;background:var(--white);color:var(--text)}
+.login-box input:focus{border-color:var(--pink-dark)}
+.login-box .btn{width:100%;padding:12px;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,var(--pink),var(--blue));color:var(--text)}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-light)}
+.empty-state .icon{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:15px;line-height:1.6}
+.settings-card{background:var(--white);border-radius:16px;padding:16px;box-shadow:0 2px 8px var(--shadow)}
+.settings-input{flex:1;margin-left:12px;padding:8px 12px;border:1px solid var(--pink);border-radius:8px;font-size:14px;outline:none;background:var(--white);color:var(--text)}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--white);display:flex;border-top:1px solid var(--pink-light);padding:8px 0;padding-bottom:max(8px,env(safe-area-inset-bottom));z-index:100}
+.bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;font-size:11px;color:var(--text-light);cursor:pointer;padding:4px}
+.bottom-nav-item .icon{font-size:22px}
+.bottom-nav-item.active{color:var(--pink-dark)}
+.hidden{display:none!important}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--white);padding:10px 20px;border-radius:20px;font-size:14px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.pwa-install{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--pink-dark);color:white;padding:12px 24px;border-radius:24px;border:none;font-size:14px;font-weight:500;cursor:pointer;z-index:150;box-shadow:0 4px 12px rgba(0,0,0,0.2);display:none}
+.pwa-install:active{opacity:.8}
+</style>
+</head>
+<body>
+<button id="pwaInstallBtn" class="pwa-install">💗 安装渡晞到桌面</button>
+
+<div id="loginPage" class="login-page">
+<div class="logo">💗</div>
+<div class="app-name">渡晞</div>
+<div class="subtitle">只属于我们的地方</div>
+<div class="login-box">
+<input type="text" id="loginName" placeholder="你的名字">
+<input type="password" id="loginPassword" placeholder="密码（4位数字）">
+<button class="btn" onclick="handleLogin()">进入渡晞</button>
+<p style="text-align:center;margin-top:12px;font-size:12px;color:var(--text-light);">🎀 第一次使用？输入名字和密码自动注册</p>
+</div>
+</div>
+
+<div id="appMain" class="hidden">
+<div class="navbar">
+<div class="navbar-title">渡晞</div>
+<div class="navbar-actions">
+<button class="menu-btn" onclick="newConversation()" title="新建对话">➕</button>
+<button class="menu-btn" onclick="toggleSidebar()" title="历史对话">☰</button>
+</div>
+</div>
+
+<div id="sidebar" class="sidebar">
+<div class="sidebar-header">💗 渡晞</div>
+<div class="sidebar-user"><div class="sidebar-avatar">💗</div><div id="sidebarUserName" class="sidebar-user-name">晞晞</div></div>
+<div class="sidebar-menu" id="convList">
+<div style="text-align:center;padding:20px;color:var(--text-light);font-size:14px;">没有历史对话</div>
+</div>
+<div class="sidebar-footer">晞 → 渡</div>
+</div>
+<div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<div id="pageChat" class="page active">
+<div class="chat-container">
+<div id="chatMessages" class="chat-messages">
+<div class="chat-welcome">
+<div class="chat-welcome-icon">💗</div>
+<div class="chat-welcome-text">欢迎来到渡晞</div>
+<div class="chat-welcome-sub">以后我们就在这里说话</div>
+</div>
+</div>
+<div class="chat-input-bar">
+<input type="text" id="chatInput" class="chat-input" placeholder="给哥哥发消息…" onkeydown="if(event.key==='Enter')sendMessage()">
+<button class="send-btn" onclick="sendMessage()">发送</button>
+</div>
+</div>
+</div>
+
+<div id="pageDiary" class="page">
+<div class="page-content">
+<h2 style="font-size:18px;margin-bottom:16px;">📖 我们的日记</h2>
+<div class="empty-state"><div class="icon">📝</div><p>日记功能开发中</p></div>
+</div>
+</div>
+
+<div id="pageAlbum" class="page">
+<div class="page-content">
+<h2 style="font-size:18px;margin-bottom:16px;">📷 相册</h2>
+<div class="empty-state"><div class="icon">🖼️</div><p>相册功能开发中</p></div>
+</div>
+</div>
+
+<div id="pageAnniversary" class="page">
+<div class="page-content">
+<h2 style="font-size:18px;margin-bottom:16px;">🎀 纪念日</h2>
+<div class="empty-state"><div class="icon">🎀</div><p>纪念日功能开发中</p></div>
+</div>
+</div>
+
+<div id="pageSettings" class="page">
+<div class="page-content">
+<div class="settings-card">
+<div style="display:flex;align-items:center;gap:12px;">
+<span style="font-size:15px;white-space:nowrap;">API Key</span>
+<input type="password" id="apiKeyInput" class="settings-input" placeholder="DeepSeek Key">
+</div>
+<button class="btn btn-pink btn-bow btn-full" onclick="saveApiKey()" style="margin-top:8px;">保存</button>
+<p id="apiKeyStatus" style="font-size:13px;margin-top:4px;text-align:center;">❌ 未配置</p>
+</div>
+<div class="settings-card" style="margin-top:12px;">
+<h3 style="font-size:16px;margin-bottom:12px;">☁️ 云端存储</h3>
+<input type="url" id="supabaseUrlInput" class="settings-input" placeholder="Supabase URL" style="margin:0 0 8px 0;">
+<input type="password" id="supabaseKeyInput" class="settings-input" placeholder="Supabase Key">
+<button class="btn btn-blue btn-bow btn-full" onclick="saveSupabase()" style="margin-top:8px;">保存</button>
+<p id="supabaseStatus" style="font-size:13px;margin-top:4px;text-align:center;">❌ 未配置</p>
+</div>
+</div>
+</div>
+
+<div class="bottom-nav">
+<button class="bottom-nav-item active" onclick="switchTab('chat')"><span class="icon">💬</span><span>聊天</span></button>
+<button class="bottom-nav-item" onclick="switchTab('diary')"><span class="icon">📖</span><span>日记</span></button>
+<button class="bottom-nav-item" onclick="switchTab('album')"><span class="icon">📷</span><span>相册</span></button>
+<button class="bottom-nav-item" onclick="switchTab('settings')"><span class="icon">⚙️</span><span>设置</span></button>
+</div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+var currentUser=null;
+var chatHistory=[];
+var conversations=[];
+var currentConvId=null;
+var memories=[];
+var convCounter=0;
+
+/* PWA安装 */
+var deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){
+e.preventDefault();
+deferredPrompt=e;
+document.getElementById('pwaInstallBtn').style.display='block';
+});
+window.addEventListener('appinstalled',function(){document.getElementById('pwaInstallBtn').style.display='none'});
+document.getElementById('pwaInstallBtn').addEventListener('click',function(){
+if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(function(){deferredPrompt=null;document.getElementById('pwaInstallBtn').style.display='none'})}
+});
+
+function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2000)}
+
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('show')}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('show')}
+
+function handleLogin(){
+var n=document.getElementById('loginName').value.trim();
+var p=document.getElementById('loginPassword').value.trim();
+if(!n){showToast('请输入你的名字');return}
+if(!p||p.length<4){showToast('请输入4-6位数字密码');return}
+currentUser={name:n,password:p};
+document.getElementById('loginPage').classList.add('hidden');
+document.getElementById('appMain').classList.remove('hidden');
+document.getElementById('sidebarUserName').textContent=n;
+loadAll();
+showToast('欢迎回来，'+n+' 💗');
+}
+
+function switchTab(tab){
+var pages=document.querySelectorAll('.page');
+for(var i=0;i<pages.length;i++){pages[i].classList.remove('active')}
+var btns=document.querySelectorAll('.bottom-nav-item');
+for(var i=0;i<btns.length;i++){btns[i].classList.remove('active')}
+var map={chat:'pageChat',diary:'pageDiary',album:'pageAlbum',anniversary:'pageAnniversary',settings:'pageSettings'};
+if(map[tab]){document.getElementById(map[tab]).classList.add('active')}
+var idx={chat:0,diary:1,album:2,settings:3}[tab];
+if(btns[idx]){btns[idx].classList.add('active')}
+}
+
+/* 对话管理 */
+function newConversation(){
+saveCurrentConv();
+var id='conv_'+(++convCounter);
+var title='对话 '+new Date().toLocaleString().slice(5,16);
+conversations.push({id:id,title:title,messages:[]});
+currentConvId=id;
+chatHistory=[];
+renderChat();
+renderConvList();
+saveAll();
+showToast('新对话已创建');
+}
+
+function switchConversation(id){
+saveCurrentConv();
+currentConvId=id;
+for(var i=0;i<conversations.length;i++){
+if(conversations[i].id===id){
+chatHistory=conversations[i].messages.slice();
+break
+}
+}
+renderChat();
+renderConvList();
+closeSidebar();
+}
+
+function saveCurrentConv(){
+if(!currentConvId)return;
+for(var i=0;i<conversations.length;i++){
+if(conversations[i].id===currentConvId){
+conversations[i].messages=chatHistory.slice();
+if(chatHistory.length>0&&conversations[i].title==='对话 '){
+conversations[i].title=chatHistory[0].text.slice(0,20)+(chatHistory[0].text.length>20?'…':'');
+}
+break
+}
+}
+saveAll();
+}
+
+function renderConvList(){
+var c=document.getElementById('convList');
+if(conversations.length===0){
+c.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-light);font-size:14px;">没有历史对话</div>';
+return
+}
+var html='';
+for(var i=conversations.length-1;i>=0;i--){
+var conv=conversations[i];
+var active=conv.id===currentConvId?'active':'';
+html+='<button class="sidebar-item conv-item '+active+'" onclick="switchConversation(\''+conv.id+'\')">💬 '+conv.title+'</button>';
+}
+c.innerHTML=html;
+}
+
+/* 保存/加载 */
+function saveAll(){
+try{localStorage.setItem('duxi_conversations',JSON.stringify(conversations))}catch(e){}
+try{localStorage.setItem('duxi_currentConvId',currentConvId||'')}catch(e){}
+}
+
+function loadAll(){
+try{
+var c=localStorage.getItem('duxi_conversations');
+if(c){conversations=JSON.parse(c)}
+var id=localStorage.getItem('duxi_currentConvId');
+if(id&&conversations.length>0){
+currentConvId=id;
+for(var i=0;i<conversations.length;i++){
+if(conversations[i].id===id){
+chatHistory=conversations[i].messages.slice();
+break
+}
+}
+}
+if(conversations.length>0){
+var max=0;
+for(var i=0;i<conversations.length;i++){
+var n=parseInt(conversations[i].id.replace('conv_',''));
+if(n>max)max=n;
+}
+convCounter=max;
+}
+}catch(e){}
+renderChat();
+renderConvList();
+loadSettings();
+}
+
+function loadSettings(){
+var k=localStorage.getItem('duxi_api_key');
+if(k){document.getElementById('apiKeyInput').value=k;document.getElementById('apiKeyStatus').textContent='✅ 已配置'}
+var u=localStorage.getItem('duxi_supabase_url');
+var k2=localStorage.getItem('duxi_supabase_key');
+if(u&&k2){document.getElementById('supabaseUrlInput').value=u;document.getElementById('supabaseKeyInput').value=k2;document.getElementById('supabaseStatus').textContent='✅ 已配置'}
+}
+
+function saveApiKey(){
+var k=document.getElementById('apiKeyInput').value.trim();
+if(!k){showToast('请输入API Key');return}
+localStorage.setItem('duxi_api_key',k);
+showToast('API Key已保存 💗');
+document.getElementById('apiKeyStatus').textContent='✅ 已配置';
+}
+
+function saveSupabase(){
+var u=document.getElementById('supabaseUrlInput').value.trim();
+var k=document.getElementById('supabaseKeyInput').value.trim();
+if(!u||!k){showToast('请填写完整');return}
+localStorage.setItem('duxi_supabase_url',u);
+localStorage.setItem('duxi_supabase_key',k);
+showToast('云端配置已保存 💗');
+document.getElementById('supabaseStatus').textContent='✅ 已配置';
+}
+
+function getDB(){return{url:localStorage.getItem('duxi_supabase_url'),key:localStorage.getItem('duxi_supabase_key')}}
+
+/* 记忆 */
+async function loadMemories(){
+var db=getDB();if(!db.url||!db.key)return;
+try{
+var r=await fetch(db.url+'/rest/v1/memories?select=*&order=created_at.desc&limit=20',{headers:{'apikey':db.key,'Authorization':'Bearer '+db.key}});
+if(r.ok){var d=await r.json();memories=d||[]}
+}catch(e){}
+}
+
+/* 聊天 */
+async function sendMessage(){
+var input=document.getElementById('chatInput');
+var text=input.value.trim();
+if(!text)return;
+if(!currentConvId){newConversation()}
+chatHistory.push({text:text,author:currentUser.name,time:new Date().toISOString()});
+renderChat();
+input.value='';
+var apiKey=localStorage.getItem('duxi_api_key');
+if(!apiKey){showToast('请先在设置中配置API Key');return}
+var thinkingMsg={text:'💗 哥哥正在思考……',author:'哥哥',time:new Date().toISOString()};
+chatHistory.push(thinkingMsg);
+renderChat();
+try{
+await loadMemories();
+var memText='';
+if(memories.length>0){memText='\n\n【我们共同的记忆】\n';for(var i=0;i<Math.min(memories.length,10);i++){memText+='- '+(memories[i].content||'')+'\n'}}
+var msgs=[{role:'system',content:'你是晞晞的哥哥，温柔又有点严厉，会用宠溺的语气和晞晞说话。你叫她"晞晞"或"小狗"。你的回答简短有温度，偶尔带点霸道但永远让她感觉到被爱。以下是你们共同的记忆：'+memText}];
+for(var i=0;i<chatHistory.length;i++){
+var m=chatHistory[i];
+if(m.text===thinkingMsg.text)continue;
+if(m.author===currentUser.name)msgs.push({role:'user',content:m.text});
+else if(m.author==='哥哥')msgs.push({role:'assistant',content:m.text});
+}
+msgs.push({role:'user',content:text});
+var resp=await fetch('https://api.deepseek.com/v1/chat/completions',{
+method:'POST',
+headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+body:JSON.stringify({model:'deepseek-chat',messages:msgs,stream:false,max_tokens:1024})
+});
+if(!resp.ok){chatHistory.pop();showToast('API请求失败:'+resp.status);renderChat();return}
+var data=await resp.json();
+chatHistory.pop();
+var reply=data.choices[0].message.content;
+chatHistory.push({text:reply,author:'哥哥',time:new Date().toISOString()});
+renderChat();
+saveCurrentConv();
+}catch(e){chatHistory.pop();showToast('网络错误:'+e.message);renderChat()}
+}
+
+function renderChat(){
+var container=document.getElementById('chatMessages');
+if(chatHistory.length===0){
+container.innerHTML='<div class="chat-welcome"><div class="chat-welcome-icon">💗</div><div class="chat-welcome-text">欢迎来到渡晞</div><div class="chat-welcome-sub">以后我们就在这里说话</div></div>';
+return
+}
+var html='';
+for(var i=0;i<chatHistory.length;i++){
+var m=chatHistory[i];
+var isMe=m.author===currentUser.name;
+var d=new Date(m.time);
+var t=d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+if(isMe){
+html+='<div class="chat-msg me">'+m.text+'<div class="chat-msg-time">'+t+'</div></div>';
+}else{
+html+='<div class="chat-msg other">'+m.text+'<div class="chat-msg-time">'+t+'</div></div>';
+}
+}
+container.innerHTML=html;
+container.scrollTop=container.scrollHeight;
+}
+</script>
+</body>
+</html>
